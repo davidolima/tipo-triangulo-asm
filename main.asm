@@ -17,7 +17,7 @@ section .data
     isosceles  db "Os pontos formam um triângulo isosceles.",10,0
 	isosceleslen  equ $-isosceles
 
-    dist:  db "Distância: %d",10,0
+    dist:  dw "Distância: %f",10,0
     distlen: equ $-dist
 
     ponto:  db "(%d, %d)",10,0
@@ -32,10 +32,10 @@ section .bss
     y2:  resb 8
     x3:  resb 8
     y3:  resb 8
-    d12: resb 8
-    d23: resb 8
-    d13: resb 8
-    r:   resb 8
+    d12: resq 1
+    d23: resq 1
+    d13: resq 1
+    r:   resq 1
 
 section .text
 	global main
@@ -47,10 +47,10 @@ section .text
     call printf
 %endmacro
 
-%macro printValor 2
-    mov rdi, %2
-    mov rsi, %1
-    mov rax, 0
+%macro printDist 1
+    ;; %1 -> valor
+    mov rdi, dist
+    movsd xmm0, [%1]
     call printf
 %endmacro
 
@@ -74,28 +74,6 @@ section .text
     mov     rax, 0
     call    scanf
 %endmacro
-
-calcularDistancia:
-    ;; espera que x1 esteja em r8 e y1 em r9
-    ;; espera que x2 esteja em r10 e y2 em r11
-    ;; sqrt((x2-x1)^2+(y2-y1)^2)
-    mov dword [r], 0                  ; zerar r
-
-    sub r8, r9                  ;x2-x1
-    sub r10, r11                ;y2-y1
-
-    imul r8, r8                 ;(x2-x1)^2
-    imul r10, r10               ;(y2-y1)^2
-
-    add r8, r10                 ;(x2-x1)^2+(y2-y1)^2
-    mov [r], r8
-
-    fld qword [r]
-    fsqrt                       ;sqrt((x2-x1)^2+(y2-y1)^2)
-    fstp qword [r]
-
-    ;; retorna em r
-    ret
 
 main:
     ;; Setar o rbp para a base da pilha
@@ -122,37 +100,38 @@ main:
     mov r10, [x2]
     mov r11, [y2]
     call calcularDistancia
-    mov rax, [r]
-    mov [d12], rax
+    printDist r
+    movq xmm0, [r]
+    movq [d12], xmm0
 
     mov r8, [x1]
     mov r9, [y1]
     mov r10, [x3]
     mov r11, [y3]
     call calcularDistancia
-    mov rax, [r]
-    mov [d13], rax
+    movq xmm0, [r]
+    movq [d13], xmm0
 
     mov r8, [x2]
     mov r9, [y2]
     mov r10, [x3]
     mov r11, [y3]
     call calcularDistancia
-    mov rax, [r]
-    mov [d23], rax
+    movq xmm0, [r]
+    movq [d23], xmm0
 
-    printValor d12, dist
-    printValor d13, dist
-    printValor d23, dist
+    printDist d12
+    printDist d13
+    printDist d23
 
     ;; Avaliar tipo do triângulo
-    mov rax, d12
-    mov rbx, d13
+    mov rax, [d12]
+    mov rbx, [d13]
 
     cmp rax, rbx                ; d12 == d13?
     jne doisLadosDiferentes
 
-    mov rbx, d23
+    mov rbx, [d23]
 
     cmp rax, rbx                ; d12 == d23?
     je  isEquilatero            ; d12 == d13 == d23
@@ -160,7 +139,7 @@ main:
     jmp isIsosceles             ; d12 == d13 != d23
 
 doisLadosDiferentes:            ; d12 != d13
-    mov rcx, d23
+    mov rcx, [d23]
     cmp rax, rcx
     jne d12_ne_d13_ne_d23
 
@@ -181,6 +160,40 @@ isIsosceles:
 isEquilatero:
     print equilatero
     jmp finalizar
+
+calcularDistancia:
+    ;; espera que x1 esteja em r8 e y1 em r9
+    ;; espera que x2 esteja em r10 e y2 em r11
+    ;; sqrt((x2-x1)^2+(y2-y1)^2)
+    ;; mov dword [r], 0          ; zerar r
+
+    ;; sub r8, r9                  ;x2-x1
+    ;; sub r10, r11                ;y2-y1
+
+    ;; imul r8, r8                 ;(x2-x1)^2
+    ;; imul r10, r10               ;(y2-y1)^2
+
+    ;; add r8, r10                 ;(x2-x1)^2+(y2-y1)^2
+    ;; mov [r], r8
+
+    ;; fld qword [r]
+    ;; fsqrt                       ;sqrt((x2-x1)^2+(y2-y1)^2)
+    ;; fstp qword [r]
+
+    ;; ;; retorna em r
+    ;; ret
+    fld qword [r8]
+    fsub qword [r10]
+    fld qword [r9]
+    fsub qword [r11]
+    fmulp st1, st0
+    fmul st0, st0
+    fld1
+    faddp st1, st0
+    fsqrt
+
+    fstp qword [r]
+    ret
 
 finalizar:
     ;; Finalizar programa

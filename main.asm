@@ -6,7 +6,9 @@ section .data
 	p2textlen  equ $-p2text
     p3text  db "Insira o terceiro ponto (x3, y3):",10,0
 	p3textlen  equ $-p3text
-    ponto:  db "(%d, %d):",10,0
+    pontosInseridos:  db "Pontos inseridos (p1, p2 e p3, respectivamente):",10,0
+	pontosInseridoslen:  equ $-pontosInseridos
+    ponto:  db "(%d, %d)",10,0
 	pontotlen:  equ $-p3text
 
     fm:  db "%d",0
@@ -26,63 +28,48 @@ section .text
 	global main
     extern printf, scanf, pow
 
-%macro calcDist 2
-    mov rdi, %1
-    mov rsi, %2
-    call pow
+%macro printPonto 2
+    mov rdi, ponto
+    mov rsi, [%1]
+    mov rdx, [%2]
+    call printf
+%endmacro
+
+%macro lerPonto 3
+    mov rdi, %3
+    mov rax, 0
+    call printf
+
+    mov     rdi, fm
+    mov     rsi, %1
+    mov     rax, 0
+    call    scanf
+
+    mov     rdi, fm
+    mov     rsi, %2
+    mov     rax, 0
+    call    scanf
 %endmacro
 
 main:
+    ;; Setar o rbp para a base da pilha
     push rbp
+    ;;  Stack pointer apontando para a base
     mov rbp, rsp
 
-    ;; Ponto 1
-    mov rdi, p1text
+    ;; Leitura de pontos
+    lerPonto x1, y1, p1text    ;; Ponto 1
+    lerPonto x2, y2, p2text    ;; Ponto 2
+    lerPonto x3, y3, p3text    ;; Ponto 3
+
+    ;; Printar os pontos
+    mov rdi, pontosInseridos    ; "Pontos inseridos (p1, p2, p3):"
     mov rax, 0
     call printf
 
-    mov     rdi, fm
-    mov     rsi, x1
-    mov     rax, 0
-    call    scanf
-
-    mov     rdi, fm
-    mov     rsi, y1
-    mov     rax, 0
-    call    scanf
-
-    ;; Ponto 2
-    mov rdi, p2text
-    mov rax, 0
-    call printf
-
-    mov     rdi, fm
-    mov     rsi, x2
-    mov     rax, 0
-    call    scanf
-
-    mov     rdi, fm
-    mov     rsi, y2
-    mov     rax, 0
-    call    scanf
-
-    ;; Ponto 3
-    mov rdi, p3text
-    mov rax, 0
-    call printf
-
-    mov     rdi, fm
-    mov     rsi, x3
-    mov     rax, 0
-    call    scanf
-
-    mov     rdi, fm
-    mov     rsi, y3
-    mov     rax, 0
-    call    scanf
-
-    ;; Calcular distancias
-    calcDist([x1],[y1])
+    printPonto x1, y1
+    printPonto x2, y2
+    printPonto x3, y3
 
     ;; Finalizar programa
     mov rax, 60

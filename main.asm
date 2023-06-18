@@ -4,10 +4,8 @@ section .data
     p2text db "Insira o segundo ponto (x2, y2): ",0
     flag db "Dois lados iguais", 0, 10
     p3text db "Insira o terceiro ponto (x3, y3): ",0
- 
 
-    pontosInseridos db "Pontos inseridos (p1, p2 e p3, respectivamente):",10,0
-   
+    pontosInseridos db "Pontos inseridos (p1, p2 e p3, respectivamente):",10,0   
 
     equilatero db "Os pontos formam um triângulo equilatero.",10,0    
     escaleno db "Os pontos formam um triângulo escaleno.",10,0   
@@ -34,32 +32,29 @@ section .text
 global main
 extern printf, scanf
 
-
 %macro print 1
-    ; exibe menssagem
+    ; Exibe menssagem
     mov rdi, %1
     call printf
 %endmacro
 
 %macro printDist 1
-    ; exibe distancia
+    ; Exibe distancia
     mov rdi, formatacao_exibe_distancia
     movsd xmm0, qword [%1]
     call printf
 %endmacro
 
 %macro printPonto 2
-    ; exibe um ponto
+    ; Exibe um ponto
     mov rdi, formatacao_exibe_ponto
     movsd xmm0, qword [%1]
     movsd xmm1, qword [%2]
     call printf
 %endmacro
 
-
-
 %macro lerPonto 3
-    ; faz a leitura de um ponto
+    ; Faz a leitura de um ponto
     print %3
 
     mov rdi, formatacao_entrada
@@ -68,10 +63,23 @@ extern printf, scanf
     call scanf
 %endmacro
 
+%macro distancia 5
+    ;; %1 -> x1, %2 -> y1
+    ;; %3 -> x2, %4 -> y2
+    ;; %5 -> variável destino
+    movsd xmm0, qword [%1]
+    movsd xmm1, qword [%3]
+    movsd xmm2, qword [%2]
+    movsd xmm3, qword [%4]
+    call calcularDistancia
+    movsd qword [%5], xmm0
+%endmacro
+
 main:
     ;; Setar o rbp para a base da pilha
     push rbp
-    ;;  Stack pointer apontando para a base
+    ;; Stack pointer apontando para a base
+    ;; (necessario para as funcoes externas)
     mov rbp, rsp
 
     ;; Leitura de pontos
@@ -88,35 +96,14 @@ main:
 
     ;; Calcular distância
 
-    movsd xmm0, qword [x1]
-    movsd xmm1, qword [x2]
-    movsd xmm2, qword [y1]
-    movsd xmm3, qword [y2]
-    call calcularDistancia
-    movsd qword [d12], xmm0
-
-
-    movsd xmm0, qword [x1]
-    movsd xmm1, qword [x3]
-    movsd xmm2, qword [y1]
-    movsd xmm3, qword [y3]
-    call calcularDistancia
-    movsd qword [d13], xmm0
-
-
-    movsd xmm0, qword [x2]
-    movsd xmm1, qword [x3]
-    movsd xmm2, qword [y2]
-    movsd xmm3, qword [y3]
-    call calcularDistancia
-    movsd qword [d23], xmm0
+    distancia x1, y1, x2, y2, d12
+    distancia x1, y1, x3, y3, d13
+    distancia x2, y2, x3, y3, d23
 
     ;exibe as distancias com 4 casas decimais
     printDist d12
     printDist d13
     printDist d23
-
-
 
     ;; Avaliar tipo do triângulo
     movsd xmm0, [d12]
@@ -150,23 +137,22 @@ isIsosceles:
 isEquilatero:
     print equilatero
     jmp finalizar
-    
 
 calcularDistancia:
     ; realiza o calculo da distancia euclidiana
-    
+    ;
     subsd xmm0, xmm1 ; x_1 - x_2
     mulsd xmm0, xmm0 ; (x_1 - x_2)²
 
     subsd xmm2, xmm3 ; y_1 - y_2
     mulsd xmm2, xmm2 ; (y_1 - y_2)²
 
-    addsd xmm0, xmm2 ; (x_1 - x_2)² * (y_1 - y_2)²
+    addsd xmm0, xmm2 ; (x_1 - x_2)²+* (y_1 - y_2)²
 
-    sqrtsd xmm0, xmm0 ; sqrt( (x_1 - x_2)² * (y_1 - y_2)² )
+    sqrtsd xmm0, xmm0 ; sqrt( (x_1 - x_2)²+* (y_1 - y_2)² )
 
     ;; Arredondar para duas casas decimais
-    movsd xmm1, [valor_arredondamento] ; defini a quantidade casas do arredondamento
+    movsd xmm1, [valor_arredondamento] ; define a quantidade de casas do arredondamento
     mulsd xmm0, xmm1                   ; resultado * arredondamento
     roundsd xmm0, xmm0, 1              ; round(resultado * arredondamento)
     divsd xmm0, xmm1                   ; round(resultado * arredondamento) / arredondamento

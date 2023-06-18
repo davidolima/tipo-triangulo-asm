@@ -2,7 +2,7 @@ section .data
     p1text db "Insira o primeiro ponto (x1, y1): ",0
 
     p2text db "Insira o segundo ponto (x2, y2): ",0
-
+    flag db "Dois lados iguais", 0, 10
     p3text db "Insira o terceiro ponto (x3, y3): ",0
  
 
@@ -21,20 +21,19 @@ section .data
     formatacao_entrada db "%lf %lf",0
 
 section .bss
-    x1 resb 8
-    y1 resb 8
-    x2 resb 8
-    y2 resb 8
-    x3 resb 8
-    y3 resb 8
+    x1 resq 1
+    y1 resq 1
+    x2 resq 1
+    y2 resq 1
+    x3 resq 1
+    y3 resq 1
     d12 resq 1
     d23 resq 1
-    d13 resq 1
-    r resq 1
+    d13 resq 1   
 
 section .text
 global main
-extern printf, scanf, sqrt
+extern printf, scanf
 
 %macro print 1
     mov rdi, %1
@@ -109,28 +108,28 @@ main:
     printDist d13
     printDist d23
 
+
+
     ;; Avaliar tipo do triângulo
-    movq xmm0, [d12]
-    movq xmm1, [d13]
-    movq xmm2, [d23]
-    
-    comisd xmm0, xmm1                ; d12 == d13?
-    jne doisLadosDiferentes
+    movsd xmm0, [d12]
+    movsd xmm1, [d13]
+    movsd xmm2, [d23]
+    ucomisd xmm0, xmm1
+    je doisLadosIguais    
+    jmp doisLadosDiferentes
 
-    comisd xmm0, xmm2                ; d12 == d23?
-    je  isEquilatero            ; d12 == d13 == d23
+doisLadosIguais:    
+    ucomisd xmm0, xmm2
+    je isEquilatero
+    jmp isIsosceles
 
-    jmp isIsosceles             ; d12 == d13 != d23
+doisLadosDiferentes:
+    ucomisd xmm0, xmm2
+    je isIsosceles    
 
-doisLadosDiferentes:           ; d12 != d13
-    comisd xmm0, xmm2
-    jne d12_ne_d13_ne_d23
-
-    jmp isIsosceles             ; d13 != d12 == d23
-
-d12_ne_d13_ne_d23:
-    comisd xmm1, xmm2                ; d13 == d23?
-    jne isEscaleno              ; d12 != d13 != d23
+    ucomisd xmm1, xmm2
+    jne isEscaleno
+    jmp isIsosceles
 
 isEscaleno:
     print escaleno

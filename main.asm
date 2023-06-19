@@ -1,3 +1,16 @@
+;; -----------------------------------------------------
+;; |    MATA49 - Programação de Software Básico        |
+;; -----------------------------------------------------
+;; | Grupo:                                            |
+;; | David de Oliveira Lima                            |
+;; | Israel Almeida Pedreira                           |
+;; | Márcio dos Santos Junior                          |
+;; -----------------------------------------------------
+;; | Comandos de compilação:                           |
+;; | nasm -g -f elf64 -F dwarf main.asm -o triangulo.o |
+;; | gcc triangulo.o -o triangulo -lm -no-pie -m64     |
+;; -----------------------------------------------------
+
 section .data
     p1text db "Insira o primeiro ponto (x1, y1): ",0
 
